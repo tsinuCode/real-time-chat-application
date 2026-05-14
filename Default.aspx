@@ -121,7 +121,6 @@
     </div>
 
     <script type="text/javascript">
-        // @ts-nocheck
         function switchTab(tabName) {
             var tabs = document.querySelectorAll('.tab-content');
             for (var i = 0; i < tabs.length; i++) {
