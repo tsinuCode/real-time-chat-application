@@ -48,9 +48,9 @@
         }
 
         .register-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
+            background-color: white;
+            color: #333;
+            border: 1px solid #ddd;
             padding: 10px;
             font-size: 14px;
             cursor: pointer;
@@ -59,7 +59,7 @@
         }
 
         .register-btn:hover {
-            background-color: #0056b3;
+            background-color: #f0f0f0;
         }
     </style>
 </head>
