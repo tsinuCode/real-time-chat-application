@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ChatApp.Core.DTOs.Chat;
+using ChatApp.Core.DTOs.Messages;
 using ChatApp.Core.Entities;
 using ChatApp.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,9 @@ public class ChatHub : Hub
 
     private string CurrentUserId =>
         Context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    private string CurrentUsername =>
+        Context.User?.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
 
     public override async Task OnConnectedAsync()
     {
@@ -50,29 +54,28 @@ public class ChatHub : Hub
         };
 
         var saved = await _messageRepository.AddAsync(message);
+        var dto = ToMessageDto(saved);
 
+        await Clients.User(receiverId).SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
+        await Clients.Caller.SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
+
+        var unread = await _messageRepository.GetPrivateUnreadCountAsync(receiverId, CurrentUserId);
         await Clients.User(receiverId).SendAsync(
-            RealtimeEventNames.ReceivePrivateMessage,
-            new
-            {
-                saved.Id,
-                saved.SenderId,
-                saved.ReceiverId,
-                saved.Content,
-                saved.SentAt,
-                saved.IsSeen
-            });
-
-        await Clients.Caller.SendAsync(
-            RealtimeEventNames.ReceivePrivateMessage,
-            new
-            {
-                saved.Id,
-                saved.SenderId,
-                saved.ReceiverId,
-                saved.Content,
-                saved.SentAt,
-                saved.IsSeen
-            });
+            RealtimeEventNames.UnreadCountUpdated,
+            "private",
+            CurrentUserId,
+            unread);
     }
+
+    private MessageDto ToMessageDto(Message message) => new()
+    {
+        Id = message.Id,
+        SenderId = message.SenderId,
+        SenderUsername = CurrentUsername,
+        ReceiverId = message.ReceiverId,
+        GroupId = message.GroupId,
+        Content = message.Content,
+        SentAt = message.SentAt,
+        IsSeen = message.IsSeen
+    };
 }
