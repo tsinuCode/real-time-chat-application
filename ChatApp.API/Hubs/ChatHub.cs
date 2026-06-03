@@ -12,11 +12,16 @@ namespace ChatApp.API.Hubs;
 public class ChatHub : Hub
 {
     private readonly IMessageRepository _messageRepository;
+    private readonly IGroupRepository _groupRepository;
     private readonly IConnectionTracker _connectionTracker;
 
-    public ChatHub(IMessageRepository messageRepository, IConnectionTracker connectionTracker)
+    public ChatHub(
+        IMessageRepository messageRepository,
+        IGroupRepository groupRepository,
+        IConnectionTracker connectionTracker)
     {
         _messageRepository = messageRepository;
+        _groupRepository = groupRepository;
         _connectionTracker = connectionTracker;
     }
 
@@ -69,6 +74,11 @@ public class ChatHub : Hub
 
     public async Task JoinGroupChat(int groupId)
     {
+        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
+        {
+            throw new HubException("You are not a member of this group.");
+        }
+
         await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupChannel(groupId));
     }
 
@@ -77,6 +87,11 @@ public class ChatHub : Hub
         if (string.IsNullOrWhiteSpace(content))
         {
             return;
+        }
+
+        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
+        {
+            throw new HubException("You are not a member of this group.");
         }
 
         var message = new Message
