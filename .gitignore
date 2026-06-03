@@ -1,0 +1,35 @@
+# .gitignore for ChatApp ASP.NET project
+# ---------------------------------------------------
+# Build outputs
+bin/
+obj/
+# Publish output
+publish/
+# Visual Studio temporary files
+*.vspscc
+*.vssscc
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.pidb
+*.booproj
+*.log
+*.tlog
+*.tmp
+# Visual Studio folder
+.vscode/
+.idea/
+# NuGet packages
+*.nupkg
+packages/
+# Node / npm (if used)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# ASP.NET specific
+*.config
+*.csproj.user
+*.dbmdl
+# End of .gitignore
