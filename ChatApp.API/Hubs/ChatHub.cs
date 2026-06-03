@@ -67,6 +67,33 @@ public class ChatHub : Hub
             unread);
     }
 
+    public async Task JoinGroupChat(int groupId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupChannel(groupId));
+    }
+
+    public async Task SendGroupMessage(int groupId, string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return;
+        }
+
+        var message = new Message
+        {
+            SenderId = CurrentUserId,
+            GroupId = groupId,
+            Content = content.Trim(),
+            SentAt = DateTime.UtcNow
+        };
+
+        var saved = await _messageRepository.AddAsync(message);
+        var dto = ToMessageDto(saved);
+
+        await Clients.Group(GetGroupChannel(groupId))
+            .SendAsync(RealtimeEventNames.ReceiveGroupMessage, dto);
+    }
+
     private MessageDto ToMessageDto(Message message) => new()
     {
         Id = message.Id,
@@ -78,4 +105,6 @@ public class ChatHub : Hub
         SentAt = message.SentAt,
         IsSeen = message.IsSeen
     };
+
+    private static string GetGroupChannel(int groupId) => $"group-{groupId}";
 }
