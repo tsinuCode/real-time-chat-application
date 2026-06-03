@@ -29,7 +29,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 # ASP.NET specific
-*.config
 *.csproj.user
 *.dbmdl
+# .NET SDK
+**/bin/
+**/obj/
 # End of .gitignore
