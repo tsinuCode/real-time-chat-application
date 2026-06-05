@@ -1,0 +1,30 @@
+@model ChatApp.Web.Models.UserViewModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    <div class="avatar-circle mx-auto mb-3" style="width:72px;height:72px;font-size:1.8rem;">@Model.Username[..Math.Min(1, Model.Username.Length)].ToUpper()</div>
+                    <h4 class="mb-0">@Model.Username</h4>
+                    <p class="text-muted mb-2">@Model.Email</p>
+                    <span class="badge @(Model.IsOnline ? "bg-success" : "bg-secondary")">@(Model.IsOnline ? "Online" : "Offline")</span>
+
+                    <hr />
+                    <div class="text-start">
+                        <label class="form-label">Display Name</label>
+                        <input class="form-control mb-3" value="@Model.Username" disabled />
+                        <label class="form-label">Email</label>
+                        <input class="form-control mb-3" value="@Model.Email" disabled />
+                        <small class="text-muted">Profile editing can be extended in future milestones.</small>
+                    </div>
+
+                    <a asp-controller="Chat" asp-action="Index" class="btn btn-primary mt-3">Back to Chat</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
