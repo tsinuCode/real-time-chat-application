@@ -109,6 +109,33 @@ public class ChatHub : Hub
             .SendAsync(RealtimeEventNames.ReceiveGroupMessage, dto);
     }
 
+    public async Task SendTypingIndicator(string? receiverId, int? groupId, bool isTyping)
+    {
+        var indicator = new TypingIndicatorDto
+        {
+            UserId = CurrentUserId,
+            Username = CurrentUsername,
+            ReceiverId = receiverId,
+            GroupId = groupId,
+            IsTyping = isTyping
+        };
+
+        if (groupId.HasValue)
+        {
+            if (!await _groupRepository.IsMemberAsync(groupId.Value, CurrentUserId))
+            {
+                return;
+            }
+
+            await Clients.Group(GetGroupChannel(groupId.Value))
+                .SendAsync(RealtimeEventNames.TypingIndicator, indicator);
+        }
+        else if (!string.IsNullOrEmpty(receiverId))
+        {
+            await Clients.User(receiverId).SendAsync(RealtimeEventNames.TypingIndicator, indicator);
+        }
+    }
+
     private MessageDto ToMessageDto(Message message) => new()
     {
         Id = message.Id,
