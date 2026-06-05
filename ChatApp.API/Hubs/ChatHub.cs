@@ -13,15 +13,18 @@ public class ChatHub : Hub
 {
     private readonly IMessageRepository _messageRepository;
     private readonly IGroupRepository _groupRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IConnectionTracker _connectionTracker;
 
     public ChatHub(
         IMessageRepository messageRepository,
         IGroupRepository groupRepository,
+        IUserRepository userRepository,
         IConnectionTracker connectionTracker)
     {
         _messageRepository = messageRepository;
         _groupRepository = groupRepository;
+        _userRepository = userRepository;
         _connectionTracker = connectionTracker;
     }
 
@@ -34,12 +37,21 @@ public class ChatHub : Hub
     public override async Task OnConnectedAsync()
     {
         _connectionTracker.AddConnection(CurrentUserId, Context.ConnectionId);
+        await _userRepository.SetOnlineStatusAsync(CurrentUserId, true);
+        await Groups.AddToGroupAsync(Context.ConnectionId, CurrentUserId);
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _connectionTracker.RemoveConnection(Context.ConnectionId);
+
+        var remaining = _connectionTracker.GetConnections(CurrentUserId);
+        if (remaining.Count == 0)
+        {
+            await _userRepository.SetOnlineStatusAsync(CurrentUserId, false);
+        }
+
         await base.OnDisconnectedAsync(exception);
     }
 
