@@ -9,4 +9,7 @@ public class Message
     public string Content { get; set; } = string.Empty;
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
     public bool IsSeen { get; set; }
+    public ApplicationUser? Sender { get; set; }
+    public ApplicationUser? Receiver { get; set; }
+    public ChatGroup? Group { get; set; }
 }

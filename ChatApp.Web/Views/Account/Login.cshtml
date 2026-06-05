@@ -1,0 +1,40 @@
+@model ChatApp.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Sign In</h2>
+                    @if (TempData["Error"] is string tempError)
+                    {
+                        <div class="alert alert-warning">@tempError</div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger">@Model.ErrorMessage</div>
+                    }
+                    <form asp-action="Login" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Username or Email</label>
+                            <input asp-for="UsernameOrEmail" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input asp-for="Password" type="password" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <p class="text-center mt-3 mb-0">
+                        No account? <a asp-action="Register">Register</a>
+                    </p>
+                    <p class="text-muted small text-center mt-2 mb-0">Demo: demo / Demo@123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
