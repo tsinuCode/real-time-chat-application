@@ -32,4 +32,9 @@ yarn-error.log*
 *.config
 *.csproj.user
 *.dbmdl
+# Binary outputs
+bin/
+obj/
+*.dll
+*.exe
 # End of .gitignore

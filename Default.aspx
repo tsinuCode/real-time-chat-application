@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Chat Application" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="chatapp._Default" %>
+<%@ Page Title="Chat Application" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="chatapp._Default" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
     <style type="text/css">
@@ -95,6 +95,8 @@
             <div class="tabs">
                 <button type="button" class="tab-button active" onclick="switchTab('groupChat')">Group Chat</button>
                 <button type="button" class="tab-button" onclick="switchTab('privateChat')">Private Chat</button>
+<asp:TextBox ID="txtChatSearch" CssClass="search-input" placeholder="Search chats..." runat="server"></asp:TextBox>
+<asp:Button ID="btnChatSearch" Text="Search" runat="server" OnClick="btnChatSearch_Click" />
             </div>
 
             <div id="groupChat" class="tab-content active">
