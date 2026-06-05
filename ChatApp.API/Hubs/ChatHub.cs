@@ -39,6 +39,7 @@ public class ChatHub : Hub
         _connectionTracker.AddConnection(CurrentUserId, Context.ConnectionId);
         await _userRepository.SetOnlineStatusAsync(CurrentUserId, true);
         await Groups.AddToGroupAsync(Context.ConnectionId, CurrentUserId);
+        await Clients.Others.SendAsync(RealtimeEventNames.UserStatusChanged, CurrentUserId, true);
         await base.OnConnectedAsync();
     }
 
@@ -50,6 +51,7 @@ public class ChatHub : Hub
         if (remaining.Count == 0)
         {
             await _userRepository.SetOnlineStatusAsync(CurrentUserId, false);
+            await Clients.Others.SendAsync(RealtimeEventNames.UserStatusChanged, CurrentUserId, false);
         }
 
         await base.OnDisconnectedAsync(exception);
