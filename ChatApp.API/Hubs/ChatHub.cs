@@ -70,35 +70,13 @@ public class ChatHub : Hub
             return;
         }
 
-        var message = new Message
-        {
-            SenderId = CurrentUserId,
-            ReceiverId = receiverId,
-            Content = content.Trim(),
-            SentAt = DateTime.UtcNow
-        };
-
-        var saved = await _messageRepository.AddAsync(message);
-        var dto = ToMessageDto(saved);
-
-        await Clients.User(receiverId).SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
-        await Clients.Caller.SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
-
-        var unread = await _messageRepository.GetPrivateUnreadCountAsync(receiverId, CurrentUserId);
-        await Clients.User(receiverId).SendAsync(
-            RealtimeEventNames.UnreadCountUpdated,
-            "private",
-            CurrentUserId,
-            unread);
+        var saved = await _messageRepository.AddAsync(CreateMessage(receiverId: receiverId, content: content));
+        await BroadcastPrivateMessageAsync(receiverId, ToMessageDto(saved));
     }
 
     public async Task JoinGroupChat(int groupId)
     {
-        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
-        {
-            throw new HubException("You are not a member of this group.");
-        }
-
+        await EnsureGroupMemberAsync(groupId);
         await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupChannel(groupId));
     }
 
@@ -109,24 +87,11 @@ public class ChatHub : Hub
             return;
         }
 
-        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
-        {
-            throw new HubException("You are not a member of this group.");
-        }
+        await EnsureGroupMemberAsync(groupId);
 
-        var message = new Message
-        {
-            SenderId = CurrentUserId,
-            GroupId = groupId,
-            Content = content.Trim(),
-            SentAt = DateTime.UtcNow
-        };
-
-        var saved = await _messageRepository.AddAsync(message);
-        var dto = ToMessageDto(saved);
-
+        var saved = await _messageRepository.AddAsync(CreateMessage(groupId: groupId, content: content));
         await Clients.Group(GetGroupChannel(groupId))
-            .SendAsync(RealtimeEventNames.ReceiveGroupMessage, dto);
+            .SendAsync(RealtimeEventNames.ReceiveGroupMessage, ToMessageDto(saved));
     }
 
     public async Task SendTypingIndicator(string? receiverId, int? groupId, bool isTyping)
@@ -153,6 +118,37 @@ public class ChatHub : Hub
         else if (!string.IsNullOrEmpty(receiverId))
         {
             await Clients.User(receiverId).SendAsync(RealtimeEventNames.TypingIndicator, indicator);
+        }
+    }
+
+    private Message CreateMessage(string content, string? receiverId = null, int? groupId = null) =>
+        new()
+        {
+            SenderId = CurrentUserId,
+            ReceiverId = receiverId,
+            GroupId = groupId,
+            Content = content.Trim(),
+            SentAt = DateTime.UtcNow
+        };
+
+    private async Task BroadcastPrivateMessageAsync(string receiverId, MessageDto dto)
+    {
+        await Clients.User(receiverId).SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
+        await Clients.Caller.SendAsync(RealtimeEventNames.ReceivePrivateMessage, dto);
+
+        var unread = await _messageRepository.GetPrivateUnreadCountAsync(receiverId, CurrentUserId);
+        await Clients.User(receiverId).SendAsync(
+            RealtimeEventNames.UnreadCountUpdated,
+            "private",
+            CurrentUserId,
+            unread);
+    }
+
+    private async Task EnsureGroupMemberAsync(int groupId)
+    {
+        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
+        {
+            throw new HubException("You are not a member of this group.");
         }
     }
 
