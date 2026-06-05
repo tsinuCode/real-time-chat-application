@@ -1,37 +1,15 @@
-using System;
-using ChatApp.Core.Entities;
-using Microsoft.AspNetCore.Identity;
+namespace ChatApp.Core.Entities;
 
-namespace ChatApp.Core.Entities
+public class Message
 {
-    /// <summary>
-    /// Represents a chat message within the application.
-    /// </summary>
-    public class Message
-    {
-        /// <summary>
-        /// Primary key for the message.
-        /// </summary>
-        public Guid Id { get; set; } = Guid.NewGuid();
-
-        /// <summary>
-        /// The textual content of the message.
-        /// </summary>
-        public string Content { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Timestamp when the message was sent.
-        /// </summary>
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// Identifier of the sender (foreign key to ApplicationUser).
-        /// </summary>
-        public string SenderId { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Navigation property to the sender user.
-        /// </summary>
-        public ApplicationUser? Sender { get; set; }
-    }
+    public int Id { get; set; }
+    public string SenderId { get; set; } = string.Empty;
+    public string? ReceiverId { get; set; }
+    public int? GroupId { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
+    public bool IsSeen { get; set; }
+    public ApplicationUser? Sender { get; set; }
+    public ApplicationUser? Receiver { get; set; }
+    public ChatGroup? Group { get; set; }
 }
