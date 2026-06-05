@@ -36,6 +36,12 @@ public class ChatHub : Hub
 
     public override async Task OnConnectedAsync()
     {
+        if (string.IsNullOrEmpty(CurrentUserId))
+        {
+            Context.Abort();
+            return;
+        }
+
         _connectionTracker.AddConnection(CurrentUserId, Context.ConnectionId);
         await _userRepository.SetOnlineStatusAsync(CurrentUserId, true);
         await Groups.AddToGroupAsync(Context.ConnectionId, CurrentUserId);
@@ -45,13 +51,13 @@ public class ChatHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var userId = _connectionTracker.GetUserId(Context.ConnectionId) ?? CurrentUserId;
         _connectionTracker.RemoveConnection(Context.ConnectionId);
 
-        var remaining = _connectionTracker.GetConnections(CurrentUserId);
-        if (remaining.Count == 0)
+        if (!string.IsNullOrEmpty(userId) && _connectionTracker.GetConnections(userId).Count == 0)
         {
-            await _userRepository.SetOnlineStatusAsync(CurrentUserId, false);
-            await Clients.Others.SendAsync(RealtimeEventNames.UserStatusChanged, CurrentUserId, false);
+            await _userRepository.SetOnlineStatusAsync(userId, false);
+            await Clients.Others.SendAsync(RealtimeEventNames.UserStatusChanged, userId, false);
         }
 
         await base.OnDisconnectedAsync(exception);
