@@ -1,3 +1,4 @@
+using ChatApp.Core.Common;
 using ChatApp.Web.Models;
 using ChatApp.Web.Services;
 using Microsoft.AspNetCore.Mvc;
