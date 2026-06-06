@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="settings-page">
+    <a asp-controller="Profile" asp-action="Index" class="page-back-link">
+        <i class="bi bi-arrow-left"></i> Back to profile
+    </a>
+
+    <h4 class="mb-3">Settings</h4>
+
+    <div class="settings-card">
+        <h6 class="mb-3">Notifications</h6>
+        <div class="settings-item">
+            <span>Message notifications</span>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" checked disabled />
+            </div>
+        </div>
+        <div class="settings-item">
+            <span>Typing indicators</span>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" checked disabled />
+            </div>
+        </div>
+        <div class="settings-item">
+            <span>Online status</span>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" checked disabled />
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-card mt-3">
+        <h6 class="mb-3">Appearance</h6>
+        <div class="settings-item">
+            <span>Dark theme</span>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" checked disabled />
+            </div>
+        </div>
+        <div class="settings-item">
+            <span>Compact chat list</span>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" disabled />
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-card mt-3">
+        <h6 class="mb-3">Account</h6>
+        <div class="settings-item">
+            <span>Logged in as</span>
+            <span class="text-muted">@ViewData["Username"]</span>
+        </div>
+        <div class="settings-item">
+            <span>Email</span>
+            <span class="text-muted text-truncate ms-3">@ViewData["Email"]</span>
+        </div>
+    </div>
+</div>
