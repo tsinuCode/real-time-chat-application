@@ -2,7 +2,12 @@
     ViewData["Title"] = "Chats";
 }
 
-<div id="chatDashboard" class="chat-dashboard show-list">
+<div id="chatDashboard"
+     class="chat-dashboard show-list"
+     data-api-url="@ViewData["ApiBaseUrl"]"
+     data-hub-url="@ViewData["HubUrl"]"
+     data-user-id="@ViewData["UserId"]"
+     data-jwt-token="@ViewData["JwtToken"]">
     <aside class="chat-sidebar d-none d-lg-flex">
         <button type="button" class="sidebar-profile profile-trigger" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
             <div class="avatar-circle">@((ViewData["Username"] as string)?[..1].ToUpper())</div>
@@ -38,6 +43,7 @@
             <div class="active-chat-header-info">
                 <div id="activeChatTitle" class="fw-semibold">Select a chat</div>
                 <div id="activeChatSubtitle" class="small text-muted">Choose a conversation from the list</div>
+                <div id="connectionStatus" class="connection-status small text-muted">Connecting...</div>
             </div>
             <button type="button" class="btn btn-link text-white d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
                 <i class="bi bi-person-circle fs-5"></i>
@@ -91,5 +97,6 @@
 @await Html.PartialAsync("~/Views/Profile/_ProfileDrawer.cshtml")
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
     <script src="~/js/chat.js" asp-append-version="true"></script>
 }

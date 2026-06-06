@@ -403,6 +403,10 @@ html, body {
     color: var(--text-muted);
 }
 
+.connection-status {
+    margin-top: 0.15rem;
+}
+
 @media (max-width: 991.98px) {
     .chat-shell {
         height: calc(100vh - 56px);

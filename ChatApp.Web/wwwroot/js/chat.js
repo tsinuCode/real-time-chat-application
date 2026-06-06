@@ -1,11 +1,16 @@
 (function () {
+    const dashboard = document.getElementById("chatDashboard");
     const currentUser = document.body.dataset.username || "You";
+    const currentUserId = dashboard?.dataset.userId || "";
+    const jwtToken = dashboard?.dataset.jwtToken || "";
+    const apiBaseUrl = dashboard?.dataset.apiUrl || "";
+    const hubUrl = dashboard?.dataset.hubUrl || "";
 
     const sampleConversations = [
-        { id: "user-1", name: "Alice Johnson", preview: "See you tomorrow!", time: "10:42 AM", unread: 2, online: true },
-        { id: "user-2", name: "Bob Smith", preview: "Thanks for the update.", time: "Yesterday", unread: 0, online: false },
-        { id: "group-1", name: "CS Team", preview: "Meeting at 3 PM", time: "Mon", unread: 5, online: null, isGroup: true },
-        { id: "user-3", name: "Carol Lee", preview: "Got it", time: "Sun", unread: 0, online: true }
+        { id: "user-1", receiverId: "user-alice", name: "Alice Johnson", preview: "See you tomorrow!", time: "10:42 AM", unread: 2, online: true, isGroup: false },
+        { id: "user-2", receiverId: "user-bob", name: "Bob Smith", preview: "Thanks for the update.", time: "Yesterday", unread: 0, online: false, isGroup: false },
+        { id: "group-1", groupId: 1, name: "CS Team", preview: "Meeting at 3 PM", time: "Mon", unread: 5, online: null, isGroup: true },
+        { id: "user-3", receiverId: "user-carol", name: "Carol Lee", preview: "Got it", time: "Sun", unread: 0, online: true, isGroup: false }
     ];
 
     const sampleMessages = {
@@ -36,12 +41,39 @@
     const messagesContainer = document.getElementById("messagesContainer");
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const connectionStatus = document.getElementById("connectionStatus");
 
     let activeChat = null;
+    let hubConnection = null;
+    let typingTimer = null;
     const conversationMessages = JSON.parse(JSON.stringify(sampleMessages));
 
     if (!listContainer) {
         return;
+    }
+
+    function setConnectionStatus(text, isOnline) {
+        if (!connectionStatus) return;
+        connectionStatus.textContent = text;
+        connectionStatus.classList.toggle("text-success", isOnline === true);
+        connectionStatus.classList.toggle("text-danger", isOnline === false);
+        connectionStatus.classList.toggle("text-muted", isOnline === null);
+    }
+
+    function formatTime(dateValue) {
+        const date = dateValue ? new Date(dateValue) : new Date();
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function mapDtoToMessage(dto) {
+        return {
+            id: dto.id,
+            sender: dto.senderUsername,
+            text: dto.content,
+            sentAt: formatTime(dto.sentAt),
+            isMine: dto.senderId === currentUserId
+        };
     }
 
     function renderList(items) {
@@ -79,10 +111,6 @@
         });
     }
 
-    function formatTime() {
-        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-
     function renderMessages(chatId) {
         if (!messagesContainer) return;
 
@@ -94,7 +122,7 @@
             bubble.className = `message-row ${msg.isMine ? "mine" : "theirs"}`;
             bubble.innerHTML = `
                 <div class="message-bubble">
-                    ${!msg.isMine && activeChat?.isGroup ? `<div class="message-sender">${msg.sender}</div>` : ""}
+                    ${!msg.isMine && activeChat?.isGroup ? `<div class="message-sender">${escapeHtml(msg.sender)}</div>` : ""}
                     <div class="message-text">${escapeHtml(msg.text)}</div>
                     <div class="message-time">${msg.sentAt}</div>
                 </div>
@@ -111,6 +139,21 @@
         return div.innerHTML;
     }
 
+    function appendMessage(chatId, message) {
+        if (!conversationMessages[chatId]) {
+            conversationMessages[chatId] = [];
+        }
+
+        const exists = conversationMessages[chatId].some((m) => m.id === message.id);
+        if (!exists) {
+            conversationMessages[chatId].push(message);
+        }
+
+        if (activeChat?.id === chatId) {
+            renderMessages(chatId);
+        }
+    }
+
     function updateListPreview(chatId, text) {
         const chat = sampleConversations.find((c) => c.id === chatId);
         if (chat) {
@@ -122,13 +165,73 @@
         }
     }
 
-    function sendMessage() {
+    function findChatForMessage(dto) {
+        if (dto.groupId) {
+            return sampleConversations.find((c) => c.isGroup && c.groupId === dto.groupId);
+        }
+
+        const otherUserId = dto.senderId === currentUserId ? dto.receiverId : dto.senderId;
+        return sampleConversations.find((c) => !c.isGroup && c.receiverId === otherUserId);
+    }
+
+    async function loadHistory(chat) {
+        if (!apiBaseUrl || !jwtToken) return;
+
+        const endpoint = chat.isGroup
+            ? `${apiBaseUrl}/api/messages/group/${chat.groupId}`
+            : `${apiBaseUrl}/api/messages/private/${chat.receiverId}`;
+
+        try {
+            const response = await fetch(endpoint, {
+                headers: { Authorization: `Bearer ${jwtToken}` }
+            });
+
+            if (!response.ok) return;
+
+            const payload = await response.json();
+            if (!payload?.success || !Array.isArray(payload.data)) return;
+
+            conversationMessages[chat.id] = payload.data.map(mapDtoToMessage);
+            renderMessages(chat.id);
+        } catch {
+            // Keep local sample messages when API is unavailable.
+        }
+    }
+
+    async function joinGroupIfNeeded(chat) {
+        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) return;
+        if (!chat.isGroup || !chat.groupId) return;
+
+        try {
+            await hubConnection.invoke("JoinGroupChat", chat.groupId);
+        } catch {
+            // Group join may fail for demo/sample data.
+        }
+    }
+
+    async function sendMessage() {
         if (!activeChat || !messageInput) return;
 
         const text = messageInput.value.trim();
         if (!text) return;
 
-        const newMessage = {
+        messageInput.value = "";
+        sendTypingState(false);
+
+        if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
+            try {
+                if (activeChat.isGroup) {
+                    await hubConnection.invoke("SendGroupMessage", activeChat.groupId, text);
+                } else {
+                    await hubConnection.invoke("SendPrivateMessage", activeChat.receiverId, text);
+                }
+                return;
+            } catch {
+                // Fall back to local preview when hub call fails.
+            }
+        }
+
+        const localMessage = {
             id: Date.now(),
             sender: currentUser,
             text,
@@ -136,17 +239,59 @@
             isMine: true
         };
 
-        if (!conversationMessages[activeChat.id]) {
-            conversationMessages[activeChat.id] = [];
-        }
-
-        conversationMessages[activeChat.id].push(newMessage);
-        messageInput.value = "";
-        renderMessages(activeChat.id);
+        appendMessage(activeChat.id, localMessage);
         updateListPreview(activeChat.id, text);
     }
 
-    function selectChat(chat, element) {
+    function handleIncomingMessage(dto) {
+        const chat = findChatForMessage(dto);
+        if (!chat) return;
+
+        appendMessage(chat.id, mapDtoToMessage(dto));
+        updateListPreview(chat.id, dto.content);
+    }
+
+    function handleTypingIndicator(indicator) {
+        if (!activeChat || !typingIndicator) return;
+
+        const isCurrentChat = activeChat.isGroup
+            ? indicator.groupId === activeChat.groupId
+            : indicator.userId === activeChat.receiverId || indicator.receiverId === currentUserId;
+
+        if (!isCurrentChat || indicator.userId === currentUserId) return;
+
+        typingIndicator.classList.toggle("d-none", !indicator.isTyping);
+        const text = typingIndicator.querySelector(".typing-text");
+        if (text) {
+            text.textContent = indicator.isTyping ? `${indicator.username} is typing...` : "";
+        }
+    }
+
+    function handleUserStatusChanged(userId, isOnline) {
+        sampleConversations.forEach((chat) => {
+            if (!chat.isGroup && chat.receiverId === userId) {
+                chat.online = isOnline;
+            }
+        });
+        renderList(sampleConversations);
+
+        if (activeChat && !activeChat.isGroup && activeChat.receiverId === userId) {
+            const subtitle = document.getElementById("activeChatSubtitle");
+            if (subtitle) subtitle.textContent = isOnline ? "Online" : "Offline";
+        }
+    }
+
+    function sendTypingState(isTyping) {
+        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected || !activeChat) return;
+
+        const payload = activeChat.isGroup
+            ? [null, activeChat.groupId, isTyping]
+            : [activeChat.receiverId, null, isTyping];
+
+        hubConnection.invoke("SendTypingIndicator", ...payload).catch(() => { });
+    }
+
+    async function selectChat(chat, element) {
         activeChat = chat;
 
         listContainer.querySelectorAll(".chat-list-item").forEach((el) => el.classList.remove("active"));
@@ -167,8 +312,11 @@
         placeholder?.classList.add("d-none");
         messagesPanel?.classList.remove("d-none");
         composer?.classList.remove("d-none");
+        typingIndicator?.classList.add("d-none");
 
         renderMessages(chat.id);
+        await loadHistory(chat);
+        await joinGroupIfNeeded(chat);
         messageInput?.focus();
 
         if (window.ChatApp?.showChatView) {
@@ -185,7 +333,38 @@
         renderList(filtered);
     }
 
+    async function initSignalR() {
+        if (!hubUrl || !jwtToken || typeof signalR === "undefined") {
+            setConnectionStatus("Offline mode", null);
+            return;
+        }
+
+        hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, {
+                accessTokenFactory: () => jwtToken
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        hubConnection.on("ReceivePrivateMessage", handleIncomingMessage);
+        hubConnection.on("ReceiveGroupMessage", handleIncomingMessage);
+        hubConnection.on("TypingIndicator", handleTypingIndicator);
+        hubConnection.on("UserStatusChanged", handleUserStatusChanged);
+
+        hubConnection.onreconnecting(() => setConnectionStatus("Reconnecting...", null));
+        hubConnection.onreconnected(() => setConnectionStatus("Connected", true));
+        hubConnection.onclose(() => setConnectionStatus("Disconnected", false));
+
+        try {
+            await hubConnection.start();
+            setConnectionStatus("Connected", true);
+        } catch {
+            setConnectionStatus("Offline mode", false);
+        }
+    }
+
     renderList(sampleConversations);
+    initSignalR();
 
     if (searchInput) {
         searchInput.addEventListener("input", (e) => filterList(e.target.value));
@@ -201,6 +380,12 @@
                 e.preventDefault();
                 sendMessage();
             }
+        });
+
+        messageInput.addEventListener("input", () => {
+            clearTimeout(typingTimer);
+            sendTypingState(true);
+            typingTimer = setTimeout(() => sendTypingState(false), 1200);
         });
     }
 })();

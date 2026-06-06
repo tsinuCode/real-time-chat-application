@@ -13,10 +13,14 @@ public class ChatController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        var apiBaseUrl = Environment.GetEnvironmentVariable("CHAT_API_URL") ?? "https://localhost:7244";
+
         ViewData["Title"] = "Chats";
         ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
         ViewData["UserId"] = HttpContext.Session.GetString("UserId");
         ViewData["JwtToken"] = token;
+        ViewData["ApiBaseUrl"] = apiBaseUrl;
+        ViewData["HubUrl"] = $"{apiBaseUrl.TrimEnd('/')}/hubs/chat";
 
         return View();
     }
