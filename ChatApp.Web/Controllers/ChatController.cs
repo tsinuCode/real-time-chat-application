@@ -18,6 +18,7 @@ public class ChatController : Controller
         ViewData["Title"] = "Chats";
         ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
         ViewData["UserId"] = HttpContext.Session.GetString("UserId");
+        ViewData["ActiveNav"] = "Chats";
         ViewData["JwtToken"] = token;
         ViewData["ApiBaseUrl"] = apiBaseUrl;
         ViewData["HubUrl"] = $"{apiBaseUrl.TrimEnd('/')}/hubs/chat";

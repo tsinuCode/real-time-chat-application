@@ -17,12 +17,7 @@
             </div>
             <i class="bi bi-chevron-right ms-auto text-muted"></i>
         </button>
-        <nav class="sidebar-nav">
-            <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
-            <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
-            <a href="#" class="sidebar-link"><i class="bi bi-person-check"></i> Online Users</a>
-            <a asp-controller="Profile" asp-action="Settings" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
-        </nav>
+        @await Html.PartialAsync("_SidebarNav")
     </aside>
 
     <section id="chatListPanel" class="chat-list-panel">
@@ -85,12 +80,7 @@
                 <div class="text-success small">Online</div>
             </div>
         </button>
-        <nav class="sidebar-nav">
-            <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
-            <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
-            <a href="#" class="sidebar-link"><i class="bi bi-person-check"></i> Online Users</a>
-            <a asp-controller="Profile" asp-action="Settings" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
-        </nav>
+        @await Html.PartialAsync("_SidebarNav")
     </div>
 </div>
 

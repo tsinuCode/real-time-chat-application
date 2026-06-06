@@ -1,0 +1,20 @@
+@{
+    var active = ViewData["ActiveNav"] as string ?? "";
+}
+<nav class="sidebar-nav">
+    <a asp-controller="Chat" asp-action="Index"
+       class="sidebar-link @(active == "Chats" ? "active" : "")">
+        <i class="bi bi-chat-dots"></i> Chats
+    </a>
+    <a href="#" class="sidebar-link @(active == "Groups" ? "active" : "")">
+        <i class="bi bi-people"></i> Groups
+    </a>
+    <a asp-controller="Directory" asp-action="Index"
+       class="sidebar-link @(active == "Directory" ? "active" : "")">
+        <i class="bi bi-person-lines-fill"></i> Directory
+    </a>
+    <a asp-controller="Profile" asp-action="Index"
+       class="sidebar-link @(active == "Profile" ? "active" : "")">
+        <i class="bi bi-person"></i> Profile
+    </a>
+</nav>
