@@ -30,6 +30,7 @@ public class ProfileController : Controller
         ViewData["Username"] = username;
         ViewData["Email"] = email;
         ViewData["UserId"] = userId;
+        ViewData["ActiveNav"] = "Profile";
         ViewData["BodyClass"] = "profile-page-body";
 
         return View();
@@ -47,6 +48,7 @@ public class ProfileController : Controller
         ViewData["Username"] = username;
         ViewData["Email"] = email;
         ViewData["UserId"] = userId;
+        ViewData["ActiveNav"] = "Profile";
         ViewData["BodyClass"] = "profile-page-body";
 
         return View();
