@@ -170,6 +170,10 @@
 
         renderMessages(chat.id);
         messageInput?.focus();
+
+        if (window.ChatApp?.showChatView) {
+            window.ChatApp.showChatView();
+        }
     }
 
     function filterList(query) {

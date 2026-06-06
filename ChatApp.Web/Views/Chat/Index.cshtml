@@ -2,7 +2,7 @@
     ViewData["Title"] = "Chats";
 }
 
-<div class="chat-dashboard">
+<div id="chatDashboard" class="chat-dashboard show-list">
     <aside class="chat-sidebar d-none d-lg-flex">
         <button type="button" class="sidebar-profile profile-trigger" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
             <div class="avatar-circle">@((ViewData["Username"] as string)?[..1].ToUpper())</div>
@@ -20,7 +20,7 @@
         </nav>
     </aside>
 
-    <section class="chat-list-panel">
+    <section id="chatListPanel" class="chat-list-panel">
         <div class="panel-header">
             <h2 class="h6 mb-0">Chats</h2>
             <input type="search" id="chatSearch" class="form-control form-control-sm mt-2 chat-search" placeholder="Search conversations..." />
@@ -30,9 +30,12 @@
         </div>
     </section>
 
-    <section class="chat-active-panel">
+    <section id="chatActivePanel" class="chat-active-panel">
         <div class="active-chat-header">
-            <div>
+            <button id="mobileBackButton" type="button" class="btn btn-link text-white d-lg-none mobile-back-btn" aria-label="Back to chats">
+                <i class="bi bi-arrow-left fs-5"></i>
+            </button>
+            <div class="active-chat-header-info">
                 <div id="activeChatTitle" class="fw-semibold">Select a chat</div>
                 <div id="activeChatSubtitle" class="small text-muted">Choose a conversation from the list</div>
             </div>
