@@ -1,7 +1,9 @@
 using System.Text;
 using ChatApp.API.Hubs;
 using ChatApp.Infrastructure;
+using ChatApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,6 +58,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ChatAppDbContext>();
+    await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(app.Services);
+}
 
 app.UseCors();
 app.UseAuthentication();

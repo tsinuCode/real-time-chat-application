@@ -13,7 +13,7 @@ public class ChatController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var apiBaseUrl = Environment.GetEnvironmentVariable("CHAT_API_URL") ?? "https://localhost:7244";
+        var apiBaseUrl = Environment.GetEnvironmentVariable("CHAT_API_URL") ?? "http://localhost:5244";
 
         ViewData["Title"] = "Chats";
         ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
