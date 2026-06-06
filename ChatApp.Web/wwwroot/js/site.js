@@ -12,6 +12,7 @@ window.ChatApp = window.ChatApp || {};
         if (!dashboard) return;
         dashboard.classList.remove("show-chat");
         dashboard.classList.add("show-list");
+        document.dispatchEvent(new CustomEvent("chat:reset"));
     };
 
     app.showChatView = function () {

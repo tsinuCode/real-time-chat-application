@@ -363,6 +363,25 @@
         }
     }
 
+    function resetActiveChat() {
+        activeChat = null;
+        listContainer.querySelectorAll(".chat-list-item").forEach((el) => el.classList.remove("active"));
+
+        const title = document.getElementById("activeChatTitle");
+        const subtitle = document.getElementById("activeChatSubtitle");
+        const placeholder = document.getElementById("chatPlaceholder");
+        const composer = document.getElementById("chatComposer");
+
+        if (title) title.textContent = "Select a chat";
+        if (subtitle) subtitle.textContent = "Choose a conversation from the list";
+        placeholder?.classList.remove("d-none");
+        messagesPanel?.classList.add("d-none");
+        composer?.classList.add("d-none");
+        typingIndicator?.classList.add("d-none");
+    }
+
+    document.addEventListener("chat:reset", resetActiveChat);
+
     renderList(sampleConversations);
     initSignalR();
 
