@@ -28,6 +28,10 @@ html, body {
     overflow-y: auto;
 }
 
+.directory-page-body .chat-shell {
+    overflow-y: auto;
+}
+
 .chat-topbar {
     height: 56px;
     display: flex;
@@ -531,4 +535,58 @@ html, body {
 
 .page-back-link:hover {
     color: var(--text-primary);
+}
+
+.directory-layout {
+    display: flex;
+    min-height: calc(100vh - 56px);
+}
+
+.directory-layout > .chat-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+}
+
+.directory-layout .profile-page,
+.directory-layout .settings-page {
+    flex: 1;
+}
+
+.directory-page {
+    flex: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    width: 100%;
+}
+
+.directory-user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.directory-user-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+}
+
+.directory-user-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.directory-user-link:hover {
+    color: var(--accent);
+}
+
+.directory-user-dot {
+    color: var(--accent);
+    font-size: 0.65rem;
 }
