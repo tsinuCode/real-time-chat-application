@@ -4,19 +4,51 @@ namespace ChatApp.Web.Controllers;
 
 public class ProfileController : Controller
 {
+    private bool TryGetSession(out string username, out string email, out string userId)
+    {
+        if (HttpContext.Session.GetString("JwtToken") is null)
+        {
+            username = email = userId = string.Empty;
+            return false;
+        }
+
+        username = HttpContext.Session.GetString("Username") ?? "User";
+        email = HttpContext.Session.GetString("Email") ?? "";
+        userId = HttpContext.Session.GetString("UserId") ?? "";
+        return true;
+    }
+
     [HttpGet]
     public IActionResult Index()
     {
-        var token = HttpContext.Session.GetString("JwtToken");
-        if (string.IsNullOrEmpty(token))
+        if (!TryGetSession(out var username, out var email, out var userId))
         {
             return RedirectToAction("Login", "Account");
         }
 
-        ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
-        ViewData["Email"] = HttpContext.Session.GetString("Email") ?? "";
-        ViewData["UserId"] = HttpContext.Session.GetString("UserId");
+        ViewData["Title"] = "Profile";
+        ViewData["Username"] = username;
+        ViewData["Email"] = email;
+        ViewData["UserId"] = userId;
+        ViewData["BodyClass"] = "profile-page-body";
 
-        return PartialView("_ProfileDrawer");
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult Settings()
+    {
+        if (!TryGetSession(out var username, out var email, out var userId))
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        ViewData["Title"] = "Settings";
+        ViewData["Username"] = username;
+        ViewData["Email"] = email;
+        ViewData["UserId"] = userId;
+        ViewData["BodyClass"] = "profile-page-body";
+
+        return View();
     }
 }
