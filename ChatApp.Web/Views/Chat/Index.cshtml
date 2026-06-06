@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Chats";
+}
+
+<div class="chat-dashboard">
+    <aside class="chat-sidebar d-none d-lg-flex">
+        <div class="sidebar-profile">
+            <div class="avatar-circle">@((ViewData["Username"] as string)?[..1].ToUpper())</div>
+            <div>
+                <div class="fw-semibold">@ViewData["Username"]</div>
+                <div class="text-success small">Online</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-person-check"></i> Online Users</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
+        </nav>
+    </aside>
+
+    <section class="chat-list-panel">
+        <div class="panel-header">
+            <h2 class="h6 mb-0">Chats</h2>
+            <input type="search" class="form-control form-control-sm mt-2" placeholder="Search conversations..." />
+        </div>
+        <div class="chat-list-items">
+            <div class="chat-list-empty">No conversations yet</div>
+        </div>
+    </section>
+
+    <section class="chat-active-panel">
+        <div class="chat-placeholder">
+            <i class="bi bi-chat-left-text display-4"></i>
+            <p class="mb-0 mt-3">Select a chat to start messaging</p>
+        </div>
+    </section>
+</div>
+
+<div class="offcanvas offcanvas-start chat-sidebar-offcanvas" tabindex="-1" id="sidebarOffcanvas">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Menu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-person-check"></i> Online Users</a>
+            <a href="#" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
+        </nav>
+    </div>
+</div>
