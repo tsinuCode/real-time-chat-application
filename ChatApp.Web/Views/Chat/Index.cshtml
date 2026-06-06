@@ -4,13 +4,14 @@
 
 <div class="chat-dashboard">
     <aside class="chat-sidebar d-none d-lg-flex">
-        <div class="sidebar-profile">
+        <button type="button" class="sidebar-profile profile-trigger" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
             <div class="avatar-circle">@((ViewData["Username"] as string)?[..1].ToUpper())</div>
-            <div>
+            <div class="text-start">
                 <div class="fw-semibold">@ViewData["Username"]</div>
                 <div class="text-success small">Online</div>
             </div>
-        </div>
+            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </button>
         <nav class="sidebar-nav">
             <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
             <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
@@ -22,17 +23,32 @@
     <section class="chat-list-panel">
         <div class="panel-header">
             <h2 class="h6 mb-0">Chats</h2>
-            <input type="search" class="form-control form-control-sm mt-2" placeholder="Search conversations..." />
+            <input type="search" id="chatSearch" class="form-control form-control-sm mt-2 chat-search" placeholder="Search conversations..." />
         </div>
-        <div class="chat-list-items">
-            <div class="chat-list-empty">No conversations yet</div>
+        <div id="chatListItems" class="chat-list-items">
+            <div id="chatListEmpty" class="chat-list-empty d-none">No conversations found</div>
         </div>
     </section>
 
     <section class="chat-active-panel">
-        <div class="chat-placeholder">
+        <div class="active-chat-header">
+            <div>
+                <div id="activeChatTitle" class="fw-semibold">Select a chat</div>
+                <div id="activeChatSubtitle" class="small text-muted">Choose a conversation from the list</div>
+            </div>
+            <button type="button" class="btn btn-link text-white d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
+                <i class="bi bi-person-circle fs-5"></i>
+            </button>
+        </div>
+
+        <div id="chatPlaceholder" class="chat-placeholder">
             <i class="bi bi-chat-left-text display-4"></i>
             <p class="mb-0 mt-3">Select a chat to start messaging</p>
+        </div>
+
+        <div id="chatComposer" class="chat-composer d-none">
+            <input type="text" class="form-control" placeholder="Type a message..." disabled />
+            <button type="button" class="btn btn-primary" disabled><i class="bi bi-send"></i></button>
         </div>
     </section>
 </div>
@@ -40,9 +56,16 @@
 <div class="offcanvas offcanvas-start chat-sidebar-offcanvas" tabindex="-1" id="sidebarOffcanvas">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title">Menu</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
+        <button type="button" class="sidebar-profile profile-trigger w-100 mb-3" data-bs-toggle="offcanvas" data-bs-target="#profileDrawer">
+            <div class="avatar-circle">@((ViewData["Username"] as string)?[..1].ToUpper())</div>
+            <div class="text-start">
+                <div class="fw-semibold">@ViewData["Username"]</div>
+                <div class="text-success small">Online</div>
+            </div>
+        </button>
         <nav class="sidebar-nav">
             <a href="#" class="sidebar-link active"><i class="bi bi-chat-dots"></i> Personal Chats</a>
             <a href="#" class="sidebar-link"><i class="bi bi-people"></i> Groups</a>
@@ -51,3 +74,9 @@
         </nav>
     </div>
 </div>
+
+@await Html.PartialAsync("~/Views/Profile/_ProfileDrawer.cshtml")
+
+@section Scripts {
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

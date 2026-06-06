@@ -121,6 +121,170 @@ html, body {
     padding: 2rem 1rem;
 }
 
+.chat-search {
+    background: var(--bg-tertiary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.chat-search::placeholder {
+    color: var(--text-muted);
+}
+
+.chat-list-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.65rem;
+    text-align: left;
+    position: relative;
+}
+
+.chat-list-item:hover,
+.chat-list-item.active {
+    background: var(--bg-tertiary);
+}
+
+.chat-list-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.chat-list-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-list-top,
+.chat-list-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.chat-list-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-list-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.chat-list-preview {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-list-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    flex-shrink: 0;
+}
+
+.online-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #31b545;
+    position: absolute;
+    left: 46px;
+    top: 46px;
+    border: 2px solid var(--bg-primary);
+}
+
+.active-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.chat-composer {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.chat-composer .form-control {
+    background: var(--bg-tertiary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.profile-trigger {
+    border: none;
+    background: transparent;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 1.25rem;
+}
+
+.profile-drawer {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.avatar-circle-lg {
+    width: 72px;
+    height: 72px;
+    font-size: 1.5rem;
+}
+
+.profile-drawer-card .text-muted {
+    color: var(--text-muted) !important;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    max-width: 60%;
+    text-align: right;
+}
+
 .chat-placeholder {
     flex: 1;
     display: flex;
