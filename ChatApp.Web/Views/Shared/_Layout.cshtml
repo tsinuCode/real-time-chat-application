@@ -8,12 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="chat-app-body" data-username="@ViewData["Username"]">
+<body class="chat-app-body @(ViewData["BodyClass"])" data-username="@ViewData["Username"]">
     <header class="chat-topbar">
         <button class="btn btn-link text-white d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Open menu">
             <i class="bi bi-list fs-4"></i>
         </button>
-        <div class="chat-brand">ChatApp</div>
+        <div class="chat-brand">
+            <i class="bi bi-chat-heart-fill me-2 text-info"></i>ChatApp
+        </div>
         <div class="chat-topbar-actions">
             <span class="text-white-50 small d-none d-md-inline">@ViewData["Username"]</span>
         </div>
