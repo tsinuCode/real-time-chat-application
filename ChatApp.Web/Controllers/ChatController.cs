@@ -1,0 +1,37 @@
+using Microsoft.AspNetCore.Mvc;
+
+namespace ChatApp.Web.Controllers;
+
+public class ChatController : Controller
+{
+    private readonly IConfiguration _configuration;
+
+    public ChatController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    [HttpGet]
+    public IActionResult Index()
+    {
+        var token = HttpContext.Session.GetString("JwtToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var apiBaseUrl = _configuration["ApiSettings:BaseUrl"]
+            ?? Environment.GetEnvironmentVariable("CHAT_API_URL")
+            ?? "http://localhost:5244";
+
+        ViewData["Title"] = "Chats";
+        ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
+        ViewData["UserId"] = HttpContext.Session.GetString("UserId");
+        ViewData["ActiveNav"] = "Chats";
+        ViewData["JwtToken"] = token;
+        ViewData["ApiBaseUrl"] = apiBaseUrl;
+        ViewData["HubUrl"] = $"{apiBaseUrl.TrimEnd('/')}/hubs/chat";
+
+        return View();
+    }
+}
