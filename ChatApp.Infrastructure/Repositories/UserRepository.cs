@@ -53,6 +53,38 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<UserDto>> SearchUsersAsync(
+        string query, string? excludeUserId = null, CancellationToken cancellationToken = default)
+    {
+        var normalized = query.Trim().ToLower();
+
+        var usersQuery = _context.Users.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(excludeUserId))
+        {
+            usersQuery = usersQuery.Where(u => u.Id != excludeUserId);
+        }
+
+        if (!string.IsNullOrEmpty(normalized))
+        {
+            usersQuery = usersQuery.Where(u =>
+                (u.UserName ?? string.Empty).ToLower().Contains(normalized) ||
+                (u.Email ?? string.Empty).ToLower().Contains(normalized));
+        }
+
+        return await usersQuery
+            .OrderBy(u => u.UserName)
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.UserName ?? string.Empty,
+                Email = u.Email ?? string.Empty,
+                IsOnline = u.IsOnline,
+                CreatedAt = u.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task SetOnlineStatusAsync(
         string userId, bool isOnline, CancellationToken cancellationToken = default)
     {
