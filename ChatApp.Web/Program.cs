@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]
     ?? Environment.GetEnvironmentVariable("CHAT_API_URL")
-    ?? "https://localhost:7244";
+    ?? "http://localhost:5244";
 
 builder.Services.AddHttpClient<ApiClient>(client =>
 {
@@ -28,9 +28,8 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();

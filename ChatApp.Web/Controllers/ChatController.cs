@@ -22,7 +22,7 @@ public class ChatController : Controller
 
         var apiBaseUrl = _configuration["ApiSettings:BaseUrl"]
             ?? Environment.GetEnvironmentVariable("CHAT_API_URL")
-            ?? "https://localhost:7244";
+            ?? "http://localhost:5244";
 
         ViewData["Title"] = "Chats";
         ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
