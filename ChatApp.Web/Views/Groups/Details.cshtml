@@ -1,0 +1,127 @@
+@model ChatApp.Web.Models.GroupDetailsViewModel
+@{
+    ViewData["Title"] = "Group Details";
+    var group = Model.Group!;
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = Model.ErrorMessage ?? TempData["ErrorMessage"] as string;
+}
+
+<div class="directory-layout">
+    @await Html.PartialAsync("_DesktopSidebar")
+
+    <div class="directory-page">
+        <a asp-controller="Groups" asp-action="Index" class="page-back-link">
+            <i class="bi bi-arrow-left"></i> Back to groups
+        </a>
+
+        <h4 class="mb-3">@group.GroupName</h4>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="profile-card mb-4">
+            <div class="detail-row">
+                <span class="detail-label">Created by</span>
+                <span class="detail-value">@group.CreatorUsername</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Created</span>
+                <span class="detail-value">@group.CreatedAt.ToString("yyyy-MM-dd")</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Members</span>
+                <span class="detail-value">@group.Members.Count</span>
+            </div>
+        </div>
+
+        <h6 class="mb-3">Members</h6>
+
+        @if (group.Members.Count == 0)
+        {
+            <p class="text-muted">No members yet.</p>
+        }
+        else
+        {
+            <ul class="directory-user-list list-unstyled mb-4">
+                @foreach (var member in group.Members)
+                {
+                    <li class="directory-user-item">
+                        <div class="directory-user-link">
+                            <span class="directory-user-dot">●</span>
+                            <span>
+                                <span class="fw-semibold">@member.Username</span>
+                                <span class="text-muted small d-block">@member.Email</span>
+                            </span>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+        <h6 class="mb-3">Add members</h6>
+
+        <form asp-controller="Groups" asp-action="Details" asp-route-id="@group.Id" method="get" class="mb-3">
+            <div class="input-group">
+                <input type="search"
+                       name="query"
+                       value="@Model.SearchQuery"
+                       class="form-control"
+                       placeholder="Search users by username or email..." />
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </form>
+
+        @if (Model.AvailableUsers.Count == 0)
+        {
+            <p class="text-muted">No users available to add. Try a different search.</p>
+        }
+        else
+        {
+            <ul class="directory-user-list list-unstyled mb-0">
+                @foreach (var user in Model.AvailableUsers)
+                {
+                    <li class="directory-user-item d-flex align-items-center justify-content-between gap-3">
+                        <div>
+                            <div class="fw-semibold">@user.Username</div>
+                            <div class="text-muted small">@user.Email</div>
+                        </div>
+                        <form asp-controller="Groups"
+                              asp-action="AddMember"
+                              asp-route-groupId="@group.Id"
+                              asp-route-userId="@user.Id"
+                              asp-route-query="@Model.SearchQuery"
+                              method="post"
+                              class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-person-plus"></i> Add
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+
+        <div class="mt-4 d-flex gap-2">
+            <a asp-controller="Chat" asp-action="Index" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-chat-dots"></i> Open Chats
+            </a>
+            <form asp-controller="Groups" asp-action="Leave" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="groupId" value="@group.Id" />
+                <button type="submit" class="btn btn-outline-danger btn-sm">Leave group</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_MobileSidebarOffcanvas")

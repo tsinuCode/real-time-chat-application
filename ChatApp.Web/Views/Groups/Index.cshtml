@@ -1,0 +1,84 @@
+@model ChatApp.Web.Models.GroupsIndexViewModel
+@{
+    ViewData["Title"] = "Groups";
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = Model.ErrorMessage ?? TempData["ErrorMessage"] as string;
+}
+
+<div class="directory-layout">
+    @await Html.PartialAsync("_DesktopSidebar")
+
+    <div class="directory-page">
+        <h4 class="mb-3">My Groups</h4>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <h6 class="card-title mb-3">Create a group</h6>
+                <form asp-controller="Groups" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input asp-for="NewGroup.GroupName"
+                               class="form-control"
+                               placeholder="Group name..." />
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i> Create
+                        </button>
+                    </div>
+                    <span asp-validation-for="NewGroup.GroupName" class="text-danger small"></span>
+                </form>
+            </div>
+        </div>
+
+        <h6 class="mb-3">Groups</h6>
+
+        @if (Model.Groups.Count == 0)
+        {
+            <p class="text-muted">You are not in any groups yet. Create one above or join from the chat list.</p>
+        }
+        else
+        {
+            <ul class="directory-user-list list-unstyled mb-0">
+                @foreach (var group in Model.Groups)
+                {
+                    <li class="directory-user-item d-flex align-items-center justify-content-between gap-3">
+                        <div>
+                            <a asp-controller="Groups" asp-action="Details" asp-route-id="@group.Id"
+                               class="text-decoration-none text-white">
+                                <div class="fw-semibold">
+                                    <i class="bi bi-people-fill me-1 text-info"></i>@group.GroupName
+                                </div>
+                            </a>
+                            <div class="text-muted small">
+                                @group.MemberCount member@(group.MemberCount == 1 ? "" : "s")
+                                · Created by @group.CreatorUsername
+                            </div>
+                        </div>
+                        <form asp-controller="Groups" asp-action="Leave" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="groupId" value="@group.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Leave</button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+
+        <div class="mt-4">
+            <a asp-controller="Chat" asp-action="Index" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-chat-dots"></i> Back to Chats
+            </a>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_MobileSidebarOffcanvas")
