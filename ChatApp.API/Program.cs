@@ -1,7 +1,9 @@
 using System.Text;
 using ChatApp.API.Hubs;
 using ChatApp.Infrastructure;
+using ChatApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,15 +49,26 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:5290", "https://localhost:7244"];
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.AllowAnyHeader()
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowAnyOrigin());
+            .AllowCredentials());
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ChatAppDbContext>();
+    await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(app.Services);
+}
 
 app.UseCors();
 app.UseAuthentication();

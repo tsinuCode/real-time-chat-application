@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const dashboard = document.getElementById("chatDashboard");
     const currentUser = document.body.dataset.username || "You";
     const currentUserId = dashboard?.dataset.userId || "";
@@ -6,7 +6,7 @@
     const apiBaseUrl = dashboard?.dataset.apiUrl || "";
     const hubUrl = dashboard?.dataset.hubUrl || "";
 
-    const sampleConversations = [
+    const fallbackConversations = [
         { id: "user-1", receiverId: "user-alice", name: "Alice Johnson", preview: "See you tomorrow!", time: "10:42 AM", unread: 2, online: true, isGroup: false },
         { id: "user-2", receiverId: "user-bob", name: "Bob Smith", preview: "Thanks for the update.", time: "Yesterday", unread: 0, online: false, isGroup: false },
         { id: "group-1", groupId: 1, name: "CS Team", preview: "Meeting at 3 PM", time: "Mon", unread: 5, online: null, isGroup: true },
@@ -44,6 +44,7 @@
     const typingIndicator = document.getElementById("typingIndicator");
     const connectionStatus = document.getElementById("connectionStatus");
 
+    let conversations = [];
     let activeChat = null;
     let hubConnection = null;
     let typingTimer = null;
@@ -66,6 +67,22 @@
         return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
+    function mapSummaryToChat(summary) {
+        const isGroup = summary.conversationType === "group";
+        const conversationId = summary.conversationId;
+        return {
+            id: isGroup ? `group-${conversationId}` : `user-${conversationId}`,
+            receiverId: isGroup ? null : conversationId,
+            groupId: isGroup ? parseInt(conversationId, 10) : null,
+            name: summary.title,
+            preview: summary.lastMessagePreview,
+            time: summary.lastMessageAt ? formatTime(summary.lastMessageAt) : "",
+            unread: summary.unreadCount ?? 0,
+            online: isGroup ? null : summary.isOnline,
+            isGroup
+        };
+    }
+
     function mapDtoToMessage(dto) {
         return {
             id: dto.id,
@@ -74,6 +91,19 @@
             sentAt: formatTime(dto.sentAt),
             isMine: dto.senderId === currentUserId
         };
+    }
+
+    function refreshList() {
+        const query = searchInput?.value || "";
+        if (query.trim()) {
+            filterList(query);
+            return;
+        }
+
+        renderList(conversations);
+        if (activeChat) {
+            listContainer.querySelector(`[data-chat-id="${activeChat.id}"]`)?.classList.add("active");
+        }
     }
 
     function renderList(items) {
@@ -95,11 +125,11 @@
                 <div class="chat-list-avatar">${chat.isGroup ? '<i class="bi bi-people-fill"></i>' : chat.name.charAt(0)}</div>
                 <div class="chat-list-body">
                     <div class="chat-list-top">
-                        <span class="chat-list-name">${chat.name}</span>
-                        <span class="chat-list-time">${chat.time}</span>
+                        <span class="chat-list-name">${escapeHtml(chat.name)}</span>
+                        <span class="chat-list-time">${escapeHtml(chat.time)}</span>
                     </div>
                     <div class="chat-list-bottom">
-                        <span class="chat-list-preview">${chat.preview}</span>
+                        <span class="chat-list-preview">${escapeHtml(chat.preview)}</span>
                         ${chat.unread > 0 ? `<span class="chat-list-badge">${chat.unread}</span>` : ""}
                     </div>
                 </div>
@@ -155,27 +185,61 @@
     }
 
     function updateListPreview(chatId, text) {
-        const chat = sampleConversations.find((c) => c.id === chatId);
+        const chat = conversations.find((c) => c.id === chatId);
         if (chat) {
             chat.preview = text;
             chat.time = formatTime();
-            renderList(sampleConversations);
-            const activeItem = listContainer.querySelector(`[data-chat-id="${chatId}"]`);
-            activeItem?.classList.add("active");
+            refreshList();
         }
     }
 
     function findChatForMessage(dto) {
         if (dto.groupId) {
-            return sampleConversations.find((c) => c.isGroup && c.groupId === dto.groupId);
+            return conversations.find((c) => c.isGroup && c.groupId === dto.groupId);
         }
 
         const otherUserId = dto.senderId === currentUserId ? dto.receiverId : dto.senderId;
-        return sampleConversations.find((c) => !c.isGroup && c.receiverId === otherUserId);
+        return conversations.find((c) => !c.isGroup && c.receiverId === otherUserId);
+    }
+
+    function findChatByConversation(conversationType, conversationId) {
+        if (conversationType === "group") {
+            const groupId = parseInt(conversationId, 10);
+            return conversations.find((c) => c.isGroup && c.groupId === groupId);
+        }
+
+        return conversations.find((c) => !c.isGroup && c.receiverId === conversationId);
+    }
+
+    async function loadConversations() {
+        if (!apiBaseUrl || !jwtToken) {
+            conversations = [...fallbackConversations];
+            return;
+        }
+
+        try {
+            const response = await fetch(`${apiBaseUrl}/api/messages/summaries`, {
+                headers: { Authorization: `Bearer ${jwtToken}` }
+            });
+
+            if (!response.ok) {
+                conversations = [...fallbackConversations];
+                return;
+            }
+
+            const payload = await response.json();
+            if (payload?.success && Array.isArray(payload.data)) {
+                conversations = payload.data.map(mapSummaryToChat);
+            } else {
+                conversations = [...fallbackConversations];
+            }
+        } catch {
+            conversations = [...fallbackConversations];
+        }
     }
 
     async function loadHistory(chat) {
-        if (!apiBaseUrl || !jwtToken) return;
+        if (!apiBaseUrl || !jwtToken) return false;
 
         const endpoint = chat.isGroup
             ? `${apiBaseUrl}/api/messages/group/${chat.groupId}`
@@ -186,15 +250,16 @@
                 headers: { Authorization: `Bearer ${jwtToken}` }
             });
 
-            if (!response.ok) return;
+            if (!response.ok) return false;
 
             const payload = await response.json();
-            if (!payload?.success || !Array.isArray(payload.data)) return;
+            if (!payload?.success || !Array.isArray(payload.data)) return false;
 
             conversationMessages[chat.id] = payload.data.map(mapDtoToMessage);
             renderMessages(chat.id);
+            return true;
         } catch {
-            // Keep local sample messages when API is unavailable.
+            return false;
         }
     }
 
@@ -248,7 +313,20 @@
         if (!chat) return;
 
         appendMessage(chat.id, mapDtoToMessage(dto));
+
+        if (activeChat?.id !== chat.id && dto.senderId !== currentUserId) {
+            chat.unread = (chat.unread || 0) + 1;
+        }
+
         updateListPreview(chat.id, dto.content);
+    }
+
+    function handleUnreadCountUpdated(conversationType, conversationId, unreadCount) {
+        const chat = findChatByConversation(conversationType, conversationId);
+        if (!chat) return;
+
+        chat.unread = unreadCount;
+        refreshList();
     }
 
     function handleTypingIndicator(indicator) {
@@ -268,12 +346,12 @@
     }
 
     function handleUserStatusChanged(userId, isOnline) {
-        sampleConversations.forEach((chat) => {
+        conversations.forEach((chat) => {
             if (!chat.isGroup && chat.receiverId === userId) {
                 chat.online = isOnline;
             }
         });
-        renderList(sampleConversations);
+        refreshList();
 
         if (activeChat && !activeChat.isGroup && activeChat.receiverId === userId) {
             const subtitle = document.getElementById("activeChatSubtitle");
@@ -316,6 +394,9 @@
 
         renderMessages(chat.id);
         await loadHistory(chat);
+        chat.unread = 0;
+        refreshList();
+        listContainer.querySelector(`[data-chat-id="${chat.id}"]`)?.classList.add("active");
         await joinGroupIfNeeded(chat);
         messageInput?.focus();
 
@@ -326,11 +407,14 @@
 
     function filterList(query) {
         const normalized = query.trim().toLowerCase();
-        const filtered = sampleConversations.filter((chat) =>
+        const filtered = conversations.filter((chat) =>
             chat.name.toLowerCase().includes(normalized) ||
             chat.preview.toLowerCase().includes(normalized)
         );
         renderList(filtered);
+        if (activeChat) {
+            listContainer.querySelector(`[data-chat-id="${activeChat.id}"]`)?.classList.add("active");
+        }
     }
 
     async function initSignalR() {
@@ -341,7 +425,8 @@
 
         hubConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, {
-                accessTokenFactory: () => jwtToken
+                accessTokenFactory: () => jwtToken,
+                withCredentials: true
             })
             .withAutomaticReconnect()
             .build();
@@ -350,9 +435,15 @@
         hubConnection.on("ReceiveGroupMessage", handleIncomingMessage);
         hubConnection.on("TypingIndicator", handleTypingIndicator);
         hubConnection.on("UserStatusChanged", handleUserStatusChanged);
+        hubConnection.on("UnreadCountUpdated", handleUnreadCountUpdated);
 
         hubConnection.onreconnecting(() => setConnectionStatus("Reconnecting...", null));
-        hubConnection.onreconnected(() => setConnectionStatus("Connected", true));
+        hubConnection.onreconnected(async () => {
+            setConnectionStatus("Connected", true);
+            if (activeChat?.isGroup) {
+                await joinGroupIfNeeded(activeChat);
+            }
+        });
         hubConnection.onclose(() => setConnectionStatus("Disconnected", false));
 
         try {
@@ -382,8 +473,13 @@
 
     document.addEventListener("chat:reset", resetActiveChat);
 
-    renderList(sampleConversations);
-    initSignalR();
+    async function init() {
+        await loadConversations();
+        refreshList();
+        await initSignalR();
+    }
+
+    init();
 
     if (searchInput) {
         searchInput.addEventListener("input", (e) => filterList(e.target.value));

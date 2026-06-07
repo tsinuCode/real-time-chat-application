@@ -4,6 +4,13 @@ namespace ChatApp.Web.Controllers;
 
 public class ChatController : Controller
 {
+    private readonly IConfiguration _configuration;
+
+    public ChatController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     [HttpGet]
     public IActionResult Index()
     {
@@ -13,7 +20,9 @@ public class ChatController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var apiBaseUrl = Environment.GetEnvironmentVariable("CHAT_API_URL") ?? "https://localhost:7244";
+        var apiBaseUrl = _configuration["ApiSettings:BaseUrl"]
+            ?? Environment.GetEnvironmentVariable("CHAT_API_URL")
+            ?? "https://localhost:7244";
 
         ViewData["Title"] = "Chats";
         ViewData["Username"] = HttpContext.Session.GetString("Username") ?? "User";
