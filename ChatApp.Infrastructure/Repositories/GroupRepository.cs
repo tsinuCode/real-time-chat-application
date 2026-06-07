@@ -48,6 +48,32 @@ public class GroupRepository : IGroupRepository
             .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
     }
 
+    public async Task<GroupDetailDto?> GetGroupDetailAsync(
+        int groupId, CancellationToken cancellationToken = default)
+    {
+        return await _context.ChatGroups
+            .AsNoTracking()
+            .Where(g => g.Id == groupId)
+            .Select(g => new GroupDetailDto
+            {
+                Id = g.Id,
+                GroupName = g.GroupName,
+                CreatedBy = g.CreatedBy,
+                CreatorUsername = g.Creator!.UserName ?? string.Empty,
+                CreatedAt = g.CreatedAt,
+                Members = g.Members
+                    .OrderBy(m => m.User!.UserName)
+                    .Select(m => new GroupMemberDto
+                    {
+                        UserId = m.UserId,
+                        Username = m.User!.UserName ?? string.Empty,
+                        Email = m.User!.Email ?? string.Empty
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<bool> IsMemberAsync(int groupId, string userId, CancellationToken cancellationToken = default)
     {
         return await _context.GroupMembers

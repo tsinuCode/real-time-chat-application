@@ -6,7 +6,8 @@
        class="sidebar-link @(active == "Chats" ? "active" : "")">
         <i class="bi bi-chat-dots"></i> Chats
     </a>
-    <a href="#" class="sidebar-link @(active == "Groups" ? "active" : "")">
+    <a asp-controller="Groups" asp-action="Index"
+       class="sidebar-link @(active == "Groups" ? "active" : "")">
         <i class="bi bi-people"></i> Groups
     </a>
     <a asp-controller="Directory" asp-action="Index"

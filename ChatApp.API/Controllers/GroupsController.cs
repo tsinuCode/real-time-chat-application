@@ -14,10 +14,12 @@ namespace ChatApp.API.Controllers;
 public class GroupsController : ControllerBase
 {
     private readonly IGroupRepository _groupRepository;
+    private readonly IUserRepository _userRepository;
 
-    public GroupsController(IGroupRepository groupRepository)
+    public GroupsController(IGroupRepository groupRepository, IUserRepository userRepository)
     {
         _groupRepository = groupRepository;
+        _userRepository = userRepository;
     }
 
     private string CurrentUserId =>
@@ -28,6 +30,23 @@ public class GroupsController : ControllerBase
     {
         var groups = await _groupRepository.GetUserGroupsAsync(CurrentUserId);
         return Ok(ApiResponse<IReadOnlyList<GroupDto>>.Ok(groups));
+    }
+
+    [HttpGet("{groupId:int}")]
+    public async Task<ActionResult<ApiResponse<GroupDetailDto>>> GetGroupDetail(int groupId)
+    {
+        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
+        {
+            return Forbid();
+        }
+
+        var group = await _groupRepository.GetGroupDetailAsync(groupId);
+        if (group is null)
+        {
+            return NotFound(ApiResponse<GroupDetailDto>.Fail("Group not found."));
+        }
+
+        return Ok(ApiResponse<GroupDetailDto>.Ok(group));
     }
 
     [HttpPost]
@@ -59,6 +78,40 @@ public class GroupsController : ControllerBase
             CreatedAt = created.CreatedAt,
             MemberCount = 1
         }));
+    }
+
+    [HttpPost("{groupId:int}/members")]
+    public async Task<ActionResult<ApiResponse<object>>> AddMember(int groupId, [FromBody] AddGroupMemberDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.Fail("Validation failed."));
+        }
+
+        if (!await _groupRepository.IsMemberAsync(groupId, CurrentUserId))
+        {
+            return Forbid();
+        }
+
+        var group = await _groupRepository.GetByIdAsync(groupId);
+        if (group is null)
+        {
+            return NotFound(ApiResponse<object>.Fail("Group not found."));
+        }
+
+        var user = await _userRepository.GetByIdAsync(request.UserId);
+        if (user is null)
+        {
+            return NotFound(ApiResponse<object>.Fail("User not found."));
+        }
+
+        if (await _groupRepository.IsMemberAsync(groupId, request.UserId))
+        {
+            return BadRequest(ApiResponse<object>.Fail("User is already a member of this group."));
+        }
+
+        await _groupRepository.AddMemberAsync(groupId, request.UserId);
+        return Ok(ApiResponse<object>.Ok(new { }, "Member added successfully."));
     }
 
     [HttpPost("{groupId:int}/join")]
