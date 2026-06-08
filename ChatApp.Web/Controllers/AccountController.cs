@@ -32,16 +32,13 @@ public class AccountController : Controller
             "/api/auth/login",
             new { model.UsernameOrEmail, model.Password });
 
-        if (!result.IsSuccess)
-        {
-            model.ErrorMessage = result.ErrorMessage ?? "Login failed.";
-            return View(model);
-        }
-
         var response = result.Data;
-        if (response?.Success != true || response.Data is null)
+        if (!result.IsSuccess || response?.Success != true || response.Data is null)
         {
-            model.ErrorMessage = response?.Message ?? "Invalid credentials.";
+            model.ErrorMessage = result.ErrorMessage
+                ?? response?.Message
+                ?? FormatErrors(response?.Errors)
+                ?? "Invalid credentials.";
             return View(model);
         }
 
@@ -72,16 +69,13 @@ public class AccountController : Controller
             "/api/auth/register",
             new { model.Username, model.Email, model.Password });
 
-        if (!result.IsSuccess)
-        {
-            model.ErrorMessage = result.ErrorMessage ?? "Registration failed.";
-            return View(model);
-        }
-
         var response = result.Data;
-        if (response?.Success != true || response.Data is null)
+        if (!result.IsSuccess || response?.Success != true || response.Data is null)
         {
-            model.ErrorMessage = response?.Message ?? "Registration failed.";
+            model.ErrorMessage = result.ErrorMessage
+                ?? response?.Message
+                ?? FormatErrors(response?.Errors)
+                ?? "Registration failed.";
             return View(model);
         }
 
@@ -98,5 +92,11 @@ public class AccountController : Controller
     {
         HttpContext.Session.Clear();
         return RedirectToAction("Login");
+    }
+
+    private static string? FormatErrors(IEnumerable<string>? errors)
+    {
+        var list = errors?.Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+        return list is { Count: > 0 } ? string.Join(" ", list) : null;
     }
 }

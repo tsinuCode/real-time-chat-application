@@ -38,7 +38,8 @@ public class ApiClient
             if (!response.IsSuccessStatusCode)
             {
                 return ApiClientResult<TResponse>.Failure(
-                    $"Request failed with status {(int)response.StatusCode}.");
+                    ExtractErrorMessage(body, response.StatusCode),
+                    TryDeserialize<TResponse>(body));
             }
 
             var data = JsonSerializer.Deserialize<TResponse>(body, JsonOptions);
@@ -64,7 +65,8 @@ public class ApiClient
             if (!response.IsSuccessStatusCode)
             {
                 return ApiClientResult<TResponse>.Failure(
-                    $"Request failed with status {(int)response.StatusCode}.");
+                    ExtractErrorMessage(body, response.StatusCode),
+                    TryDeserialize<TResponse>(body));
             }
 
             var data = JsonSerializer.Deserialize<TResponse>(body, JsonOptions);
@@ -74,6 +76,109 @@ public class ApiClient
         {
             return ApiClientResult<TResponse>.Failure(ex.Message);
         }
+    }
+
+    private static TResponse? TryDeserialize<TResponse>(string body)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<TResponse>(body, JsonOptions);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    private static string ExtractErrorMessage(string body, System.Net.HttpStatusCode statusCode)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return $"Request failed with status {(int)statusCode}.";
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("message", out var message) &&
+                message.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrWhiteSpace(message.GetString()))
+            {
+                var errors = CollectErrors(root);
+                return errors.Count > 0
+                    ? $"{message.GetString()} {string.Join(" ", errors)}"
+                    : message.GetString()!;
+            }
+
+            if (root.TryGetProperty("title", out var title) &&
+                title.ValueKind == JsonValueKind.String)
+            {
+                var errors = CollectErrors(root);
+                return errors.Count > 0
+                    ? string.Join(" ", errors)
+                    : title.GetString() ?? $"Request failed with status {(int)statusCode}.";
+            }
+
+            var fallbackErrors = CollectErrors(root);
+            if (fallbackErrors.Count > 0)
+            {
+                return string.Join(" ", fallbackErrors);
+            }
+        }
+        catch
+        {
+            // Fall through to generic message.
+        }
+
+        return $"Request failed with status {(int)statusCode}.";
+    }
+
+    private static List<string> CollectErrors(JsonElement root)
+    {
+        var errors = new List<string>();
+
+        if (!root.TryGetProperty("errors", out var errorsElement))
+        {
+            return errors;
+        }
+
+        if (errorsElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in errorsElement.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    var text = item.GetString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        errors.Add(text);
+                    }
+                }
+            }
+        }
+        else if (errorsElement.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var item in property.Value.EnumerateArray())
+                {
+                    var text = item.GetString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        errors.Add(text);
+                    }
+                }
+            }
+        }
+
+        return errors;
     }
 
     private void ApplyAuthHeader(HttpRequestMessage request)
@@ -95,6 +200,6 @@ public class ApiClientResult<T>
     public static ApiClientResult<T> Success(T data) =>
         new() { IsSuccess = true, Data = data };
 
-    public static ApiClientResult<T> Failure(string message) =>
-        new() { IsSuccess = false, ErrorMessage = message };
+    public static ApiClientResult<T> Failure(string message, T? data = default) =>
+        new() { IsSuccess = false, ErrorMessage = message, Data = data };
 }
